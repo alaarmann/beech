@@ -1,0 +1,24 @@
+{
+  "name": "beech",
+  "version": "0.1.0",
+  "description": "A JavaScript object-tree processor",
+  "main": "main.js",
+  "scripts": {
+    "test": "gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alaarmann/beech.git"
+  },
+  "author": "Alexander Laarmann <alaarmann@gmx.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alaarmann/beech/issues"
+  },
+  "homepage": "https://github.com/alaarmann/beech",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-jasmine": "^2.2.0",
+    "gulp-jshint": "^1.12.0"
+  }
+}
