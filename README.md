@@ -14,7 +14,7 @@ A JavaScript object-tree processor
 
   var collection = {
     'one' : 1,
-    'two' : someFunction,
+    'two' : function () {},
     'three' : 'A string value'
   };
 
