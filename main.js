@@ -18,7 +18,7 @@ module.exports = (function () {
       var result = {};
 
       result.applyToEach = function (functionArg, thisArg) {
-        var thisToUse = typeof thisArg !== 'undefined' ? thisArg : this ;
+        var thisToUse = typeof thisArg !== 'undefined' ? thisArg : null ;
         var each ;
 
         for (each in plainObject) {

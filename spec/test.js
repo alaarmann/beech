@@ -32,6 +32,65 @@ describe("ObjectTreeProcessor", function() {
       expect(processIt).toHaveBeenCalledWith('three', 'A string value');
       expect(processIt.calls.count()).toEqual(3);
     });
+
+    it("returns ObjectTreeProcessor object", function() {
+      var processIt = function () {};
+      var processor = createObjectTreeProcessor(collection);
+
+      var result = processor.applyToEach(processIt);
+      expect(result).toBe(processor);
+    });
+
+    describe("when object-tree is empty", function() {
+      it("does not apply function", function() {
+        var processIt = jasmine.createSpy();
+        var processor = createObjectTreeProcessor({});
+
+        processor.applyToEach(processIt);
+        expect(processIt).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("when object-tree is null", function() {
+      it("does not apply function", function() {
+        var processIt = jasmine.createSpy();
+        var processor = createObjectTreeProcessor(null);
+
+        processor.applyToEach(processIt);
+        expect(processIt).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("when this-pointer provided", function() {
+      it("applies function bound to this-pointer provided", function() {
+        var thisContextProvided = {a : 'R'};
+        var thisContextInFunction;
+        var processIt = function (key, value) {
+	  thisContextInFunction = this;
+          this.a +=  value;
+        };
+        var collection = {b : 'OMA'};
+        var processor = createObjectTreeProcessor(collection);
+
+        processor.applyToEach(processIt, thisContextProvided);
+        expect(thisContextInFunction).toBe(thisContextProvided);
+        expect(thisContextProvided.a).toEqual('ROMA');
+      });
+    });
+
+    describe("when this-pointer not provided", function() {
+      it("applies function bound to null-context", function() {
+        var thisContextInFunction;
+        var processIt = function (key, value) {
+	  thisContextInFunction = this;
+        };
+        var collection = {b : 'OMA'};
+        var processor = createObjectTreeProcessor(collection);
+
+        processor.applyToEach(processIt);
+        expect(thisContextInFunction).toBe(null);
+      });
+    });
   });
 });
 
