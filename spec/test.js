@@ -114,6 +114,30 @@ describe("ObjectTreeProcessor", function() {
         expect(thisContextInFunction).toBe(null);
       });
     });
+
+    describe("when no function-argument provided", function() {
+
+      beforeEach(function() {
+        this.collection = {b : 'OMA'};
+        this.processor = createObjectTreeProcessor(this.collection);
+      });
+      it("throws error", function() {
+        var processor = this.processor;
+        expect(function(){processor.applyToEach();}).toThrow();
+      });
+    });
+
+    describe("when wrong type as function-argument provided", function() {
+
+      beforeEach(function() {
+        this.collection = {b : 'OMA'};
+        this.processor = createObjectTreeProcessor(this.collection);
+      });
+      it("throws error", function() {
+        var processor = this.processor;
+        expect(function(){processor.applyToEach({wrong : 'type'});}).toThrow();
+      });
+    });
   });
 });
 
