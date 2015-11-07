@@ -18,32 +18,38 @@ describe("ObjectTreeProcessor", function() {
 
     beforeEach(function() {
       this.someFunction = function () {};
-      this.collection = {
-        'one' : 1,
-        'two' : this.someFunction,
-        'three' : 'A string value'
-      };
-      this.processor = createObjectTreeProcessor(this.collection);
-      this.processIt = jasmine.createSpy();
     });
 
-    it("applies function to each owned member", function() {
-      this.processor.applyToEach(this.processIt);
-      expect(this.processIt).toHaveBeenCalledWith('one', 1);
-      expect(this.processIt).toHaveBeenCalledWith('two', this.someFunction);
-      expect(this.processIt).toHaveBeenCalledWith('three', 'A string value');
-      expect(this.processIt.calls.count()).toEqual(3);
-    });
+    describe("when object-tree is not empty", function() {
+      beforeEach(function() {
+        this.collection = {
+          'one' : 1,
+          'two' : this.someFunction,
+          'three' : 'A string value'
+        };
+        this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
+      });
 
-    it("returns ObjectTreeProcessor object", function() {
-      var result = this.processor.applyToEach(this.processIt);
-      expect(result).toBe(this.processor);
+      it("applies function to each owned member", function() {
+        this.processor.applyToEach(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('one', 1);
+        expect(this.processIt).toHaveBeenCalledWith('two', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('three', 'A string value');
+        expect(this.processIt.calls.count()).toEqual(3);
+      });
+
+      it("returns ObjectTreeProcessor object", function() {
+        var result = this.processor.applyToEach(this.processIt);
+        expect(result).toBe(this.processor);
+      });
     });
 
     describe("when object-tree is empty", function() {
       beforeEach(function() {
         this.collection = {};
         this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
       });
       it("does not apply function", function() {
         this.processor.applyToEach(this.processIt);
@@ -59,6 +65,7 @@ describe("ObjectTreeProcessor", function() {
       beforeEach(function() {
         this.collection = null;
         this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
       });
       it("does not apply function", function() {
         this.processor.applyToEach(this.processIt);
