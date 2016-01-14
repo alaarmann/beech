@@ -1,12 +1,7 @@
 /*
  * Beech Unit Tests
 */
-/*jshint         strict : true, browser : false,
-  devel  : true, indent  : 2,    maxerr   : 50,
-  newcap : true, nomen   : true, plusplus : true,
-  regexp : true, undef : true,
-  white  : true
-*/
+
 /*globals require, describe, it, expect, jasmine, beforeEach */
 
 var createObjectTreeProcessor = require('../main');
@@ -14,7 +9,7 @@ var createObjectTreeProcessor = require('../main');
 describe("ObjectTreeProcessor", function() {
   'use strict';
  
-  describe("applyToEach", function() {
+  describe("map", function() {
 
     beforeEach(function() {
       this.someFunction = function () {};
@@ -32,7 +27,7 @@ describe("ObjectTreeProcessor", function() {
       });
 
       it("applies function to each owned member", function() {
-        this.processor.applyToEach(this.processIt);
+        this.processor.map(this.processIt);
         expect(this.processIt).toHaveBeenCalledWith('one', 1);
         expect(this.processIt).toHaveBeenCalledWith('two', this.someFunction);
         expect(this.processIt).toHaveBeenCalledWith('three', 'A string value');
@@ -40,7 +35,7 @@ describe("ObjectTreeProcessor", function() {
       });
 
       it("returns ObjectTreeProcessor object", function() {
-        var result = this.processor.applyToEach(this.processIt);
+        var result = this.processor.map(this.processIt);
         expect(result).toBe(this.processor);
       });
     });
@@ -52,11 +47,11 @@ describe("ObjectTreeProcessor", function() {
         this.processIt = jasmine.createSpy();
       });
       it("does not apply function", function() {
-        this.processor.applyToEach(this.processIt);
+        this.processor.map(this.processIt);
         expect(this.processIt).not.toHaveBeenCalled();
       });
       it("returns ObjectTreeProcessor object", function() {
-        var result = this.processor.applyToEach(this.processIt);
+        var result = this.processor.map(this.processIt);
         expect(result).toBe(this.processor);
       });
     });
@@ -68,11 +63,11 @@ describe("ObjectTreeProcessor", function() {
         this.processIt = jasmine.createSpy();
       });
       it("does not apply function", function() {
-        this.processor.applyToEach(this.processIt);
+        this.processor.map(this.processIt);
         expect(this.processIt).not.toHaveBeenCalled();
       });
       it("returns ObjectTreeProcessor object", function() {
-        var result = this.processor.applyToEach(this.processIt);
+        var result = this.processor.map(this.processIt);
         expect(result).toBe(this.processor);
       });
     });
@@ -92,7 +87,7 @@ describe("ObjectTreeProcessor", function() {
         this.processor = createObjectTreeProcessor(this.collection);
       });
       it("applies function bound to this-pointer provided", function() {
-        this.processor.applyToEach(this.processIt, thisContextProvided);
+        this.processor.map(this.processIt, thisContextProvided);
         expect(thisContextInFunction).toBe(thisContextProvided);
         expect(thisContextProvided.a).toEqual('ROMA');
       });
@@ -103,14 +98,14 @@ describe("ObjectTreeProcessor", function() {
 
       beforeEach(function() {
         thisContextInFunction = undefined;
-        this.processIt = function (key, value) {
+        this.processIt = function () {
 	  thisContextInFunction = this;
         };
         this.collection = {b : 'OMA'};
         this.processor = createObjectTreeProcessor(this.collection);
       });
       it("applies function bound to null-context", function() {
-        this.processor.applyToEach(this.processIt);
+        this.processor.map(this.processIt);
         expect(thisContextInFunction).toBe(null);
       });
     });
@@ -123,7 +118,7 @@ describe("ObjectTreeProcessor", function() {
       });
       it("throws error", function() {
         var processor = this.processor;
-        expect(function(){processor.applyToEach();}).toThrow();
+        expect(function(){processor.map();}).toThrow();
       });
     });
 
@@ -135,7 +130,7 @@ describe("ObjectTreeProcessor", function() {
       });
       it("throws error", function() {
         var processor = this.processor;
-        expect(function(){processor.applyToEach({wrong : 'type'});}).toThrow();
+        expect(function(){processor.map({wrong : 'type'});}).toThrow();
       });
     });
   });

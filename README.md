@@ -1,7 +1,7 @@
 Beech
 =====
 
-A JavaScript object-tree processor
+A JavaScript object-tree processor, i.e. a 'collection pipeline' as described by Fowler [here](http://martinfowler.com/articles/collection-pipeline/).
 
 ## Installation
 

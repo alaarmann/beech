@@ -3,19 +3,14 @@
  * Object-tree processor
 */
 
-/*jshint         strict : true, browser : false,
-  devel  : true, indent  : 2,    maxerr   : 50,
-  newcap : true, nomen   : true, plusplus : true,
-  regexp : true, undef : true,
-  white  : true
-*/
 /*globals module */
 
 module.exports = function (plainObject){
   'use strict';
-  var result = {};
+  var map;
+  var processor;
 
-  result.applyToEach = function (functionArg, thisArg) {
+  map = function (functionArg, thisArg) {
     var thisToUse = typeof thisArg !== 'undefined' ? thisArg : null ;
     var each ;
 
@@ -25,9 +20,13 @@ module.exports = function (plainObject){
       }
       functionArg.apply(thisToUse, [each, plainObject[each]]);
     }
-    return result;
+    return processor;
   };
 
-  return result;
+  processor = {
+    'map' : map
+  };
+
+  return processor;
 };
 
