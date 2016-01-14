@@ -5,26 +5,48 @@
 
 /*globals module */
 
-module.exports = function (plainObject){
+module.exports = function (aCollection){
   'use strict';
-  var map;
+  var currentCollection = aCollection || {};
   var processor;
+  var map;
+  var filter;
 
   map = function (functionArg, thisArg) {
     var thisToUse = typeof thisArg !== 'undefined' ? thisArg : null ;
     var each ;
+    var processed = {};
 
-    for (each in plainObject) {
-      if (!plainObject.hasOwnProperty(each)) {
+    for (each in currentCollection) {
+      if (!currentCollection.hasOwnProperty(each)) {
         continue;
       }
-      functionArg.apply(thisToUse, [each, plainObject[each]]);
+      processed[each] = functionArg.apply(thisToUse, [each, currentCollection[each]]);
     }
+    currentCollection = processed;
+    return processor;
+  };
+
+  filter = function (functionArg, thisArg) {
+    var thisToUse = typeof thisArg !== 'undefined' ? thisArg : null ;
+    var each ;
+    var processed = {};
+
+    for (each in currentCollection) {
+      if (!currentCollection.hasOwnProperty(each)) {
+        continue;
+      }
+      if (functionArg.apply(thisToUse, [each, currentCollection[each]])){
+        processed[each] = currentCollection[each];
+      }
+    }
+    currentCollection = processed;
     return processor;
   };
 
   processor = {
-    'map' : map
+    'map' : map,
+    'filter' : filter
   };
 
   return processor;
