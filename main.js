@@ -11,27 +11,23 @@
 */
 /*globals module */
 
-module.exports = (function () {
+module.exports = function (plainObject){
   'use strict';
+  var result = {};
 
-  var create = function (plainObject){
-      var result = {};
+  result.applyToEach = function (functionArg, thisArg) {
+    var thisToUse = typeof thisArg !== 'undefined' ? thisArg : null ;
+    var each ;
 
-      result.applyToEach = function (functionArg, thisArg) {
-        var thisToUse = typeof thisArg !== 'undefined' ? thisArg : null ;
-        var each ;
+    for (each in plainObject) {
+      if (!plainObject.hasOwnProperty(each)) {
+        continue;
+      }
+      functionArg.apply(thisToUse, [each, plainObject[each]]);
+    }
+    return result;
+  };
 
-        for (each in plainObject) {
-          if (!plainObject.hasOwnProperty(each)) {
-            continue;
-          }
-	  functionArg.apply(thisToUse, [each, plainObject[each]]);
-        }
-        return result;
-      };
+  return result;
+};
 
-      return result;
-    };
- 
-  return create;
-}());
