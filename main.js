@@ -9,11 +9,12 @@ module.exports = function (aCollection){
   'use strict';
   var currentCollection = aCollection || {};
   var processor;
+  var processOwnedMembers;
   var map;
   var filter;
 
-  map = function (functionArg, thisArg) {
-    var thisToUse = typeof thisArg !== 'undefined' ? thisArg : null ;
+  processOwnedMembers = function (thisArg, processFunction) {
+    var context = typeof thisArg !== 'undefined' ? thisArg : null ;
     var each ;
     var processed = {};
 
@@ -21,27 +22,26 @@ module.exports = function (aCollection){
       if (!currentCollection.hasOwnProperty(each)) {
         continue;
       }
-      processed[each] = functionArg.apply(thisToUse, [each, currentCollection[each]]);
+      processFunction.apply(null, [context, each, currentCollection[each], processed]);
     }
     currentCollection = processed;
     return processor;
   };
 
-  filter = function (functionArg, thisArg) {
-    var thisToUse = typeof thisArg !== 'undefined' ? thisArg : null ;
-    var each ;
-    var processed = {};
+  map = function (functionArg, thisArg) {
+    return processOwnedMembers(thisArg, 
+      function(aContext, aKey, aValue, aResultCollection){
+        aResultCollection[aKey] = functionArg.apply(aContext, [aKey, aValue]);
+    });
+  };
 
-    for (each in currentCollection) {
-      if (!currentCollection.hasOwnProperty(each)) {
-        continue;
-      }
-      if (functionArg.apply(thisToUse, [each, currentCollection[each]])){
-        processed[each] = currentCollection[each];
-      }
-    }
-    currentCollection = processed;
-    return processor;
+  filter = function (functionArg, thisArg) {
+    return processOwnedMembers(thisArg, 
+      function(aContext, aKey, aValue, aResultCollection){
+        if (functionArg.apply(aContext, [aKey, aValue])){
+          aResultCollection[aKey] = aValue;
+        }
+    });
   };
 
   processor = {
