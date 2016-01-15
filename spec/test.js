@@ -15,7 +15,7 @@ describe("ObjectTreeProcessor", function() {
       this.someFunction = function () {};
     });
 
-    describe("when object-tree is not empty", function() {
+    describe("when collection is a hash", function() {
       beforeEach(function() {
         this.collection = {
           'one' : 1,
@@ -40,7 +40,91 @@ describe("ObjectTreeProcessor", function() {
       });
     });
 
-    describe("when object-tree is empty", function() {
+    describe("when collection is an array", function() {
+      beforeEach(function() {
+        this.complexThing = {
+          'key1' : 'value1',
+          'key2' : 'value2'
+        };
+ 
+        this.collection = [
+          1,
+          this.someFunction,
+          'A string value',
+          this.complexThing
+        ];
+        this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
+      });
+
+      it("applies function to each owned member", function() {
+        this.processor.map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('0', 1);
+        expect(this.processIt).toHaveBeenCalledWith('1', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('2', 'A string value');
+        expect(this.processIt).toHaveBeenCalledWith('3', this.complexThing);
+        expect(this.processIt.calls.count()).toEqual(4);
+      });
+    });
+
+    describe("when collection is a scalar value", function() {
+      describe("that is a string", function() {
+        beforeEach(function() {
+          this.collection = "joke";
+          this.processor = createObjectTreeProcessor(this.collection);
+          this.processIt = jasmine.createSpy();
+        });
+
+        it("applies function to each owned member", function() {
+          this.processor.map(this.processIt);
+          expect(this.processIt).toHaveBeenCalledWith('0', this.collection);
+          expect(this.processIt.calls.count()).toEqual(1);
+        });
+      });
+
+      describe("that is a number", function() {
+        beforeEach(function() {
+          this.collection = 123;
+          this.processor = createObjectTreeProcessor(this.collection);
+          this.processIt = jasmine.createSpy();
+        });
+
+        it("applies function to each owned member", function() {
+          this.processor.map(this.processIt);
+          expect(this.processIt).toHaveBeenCalledWith('0', this.collection);
+          expect(this.processIt.calls.count()).toEqual(1);
+        });
+      });
+
+      describe("that is a function", function() {
+        beforeEach(function() {
+          this.collection = function(){return 'nonsense';};
+          this.processor = createObjectTreeProcessor(this.collection);
+          this.processIt = jasmine.createSpy();
+        });
+
+        it("applies function to each owned member", function() {
+          this.processor.map(this.processIt);
+          expect(this.processIt).toHaveBeenCalledWith('0', this.collection);
+          expect(this.processIt.calls.count()).toEqual(1);
+        });
+      });
+      describe("that is a boolean", function() {
+        beforeEach(function() {
+          this.collection = true;
+          this.processor = createObjectTreeProcessor(this.collection);
+          this.processIt = jasmine.createSpy();
+        });
+
+        it("applies function to each owned member", function() {
+          this.processor.map(this.processIt);
+          expect(this.processIt).toHaveBeenCalledWith('0', this.collection);
+          expect(this.processIt.calls.count()).toEqual(1);
+        });
+      });
+    });
+
+    describe("when collection is empty", function() {
       beforeEach(function() {
         this.collection = {};
         this.processor = createObjectTreeProcessor(this.collection);
@@ -56,7 +140,7 @@ describe("ObjectTreeProcessor", function() {
       });
     });
 
-    describe("when object-tree is null", function() {
+    describe("when collection is null", function() {
       beforeEach(function() {
         this.collection = null;
         this.processor = createObjectTreeProcessor(this.collection);
@@ -141,7 +225,7 @@ describe("ObjectTreeProcessor", function() {
       this.someFunction = function () {};
     });
 
-    describe("when object-tree is not empty", function() {
+    describe("when collection is not empty", function() {
       beforeEach(function() {
         this.collection = {
           'one' : 1,
@@ -179,7 +263,7 @@ describe("ObjectTreeProcessor", function() {
       });
     });
 
-    describe("when object-tree is empty", function() {
+    describe("when collection is empty", function() {
       beforeEach(function() {
         this.collection = {};
         this.processor = createObjectTreeProcessor(this.collection);
@@ -195,7 +279,7 @@ describe("ObjectTreeProcessor", function() {
       });
     });
 
-    describe("when object-tree is null", function() {
+    describe("when collection is null", function() {
       beforeEach(function() {
         this.collection = null;
         this.processor = createObjectTreeProcessor(this.collection);
@@ -280,7 +364,7 @@ describe("ObjectTreeProcessor", function() {
       this.someFunction = function () {};
     });
 
-    describe("when object-tree is not empty", function() {
+    describe("when collection is not empty", function() {
       beforeEach(function() {
         this.collection = {
           'one' : 1,

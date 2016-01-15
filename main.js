@@ -5,6 +5,11 @@
 
 /*globals module */
 
+var isScalar = function(aCandidate){
+  'use strict';
+  return (/^string|number|boolean|function$/).test(typeof aCandidate);
+};
+
 module.exports = function (aCollection){
   'use strict';
   var currentCollection = aCollection || {};
@@ -13,6 +18,13 @@ module.exports = function (aCollection){
   var map;
   var filter;
   var reduce;
+
+  // produce consistent internal root of collection
+  if(isScalar(aCollection)){
+    currentCollection = {'0' : aCollection};
+  } else {
+    currentCollection = aCollection || {};
+  }
 
   processOwnedMembers = function (thisArg, processFunction) {
     var context = typeof thisArg !== 'undefined' ? thisArg : null ;
