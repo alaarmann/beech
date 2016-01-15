@@ -12,6 +12,7 @@ module.exports = function (aCollection){
   var processOwnedMembers;
   var map;
   var filter;
+  var reduce;
 
   processOwnedMembers = function (thisArg, processFunction) {
     var context = typeof thisArg !== 'undefined' ? thisArg : null ;
@@ -44,9 +45,19 @@ module.exports = function (aCollection){
     });
   };
 
+  reduce = function (startValueArg, functionArg, thisArg) {
+    var accumulator = startValueArg;
+    return processOwnedMembers(thisArg, 
+      function(aContext, aKey, aValue, aResultCollection){
+        accumulator = functionArg.apply(aContext, [aKey, aValue, accumulator]);
+        aResultCollection[0] = accumulator;
+    });
+  };
+
   processor = {
     'map' : map,
-    'filter' : filter
+    'filter' : filter,
+    'reduce' : reduce
   };
 
   return processor;

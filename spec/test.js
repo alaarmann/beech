@@ -273,6 +273,51 @@ describe("ObjectTreeProcessor", function() {
       });
     });
   });
+
+  describe("reduce", function() {
+
+    beforeEach(function() {
+      this.someFunction = function () {};
+    });
+
+    describe("when object-tree is not empty", function() {
+      beforeEach(function() {
+        this.collection = {
+          'one' : 1,
+          'two' : this.someFunction,
+          'three' : 'A string value'
+        };
+        this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
+      });
+
+      it("applies function to each owned member", function() {
+        this.processor.reduce(undefined, this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('one', 1, undefined);
+        expect(this.processIt).toHaveBeenCalledWith('two', this.someFunction, undefined);
+        expect(this.processIt).toHaveBeenCalledWith('three', 'A string value', undefined);
+        expect(this.processIt.calls.count()).toEqual(3);
+      });
+
+      it("reduces members to single object", function() {
+        var result;
+        var testReducer = function(aKey, aValue, aAccumulator){
+          return aAccumulator + aKey + ' is of type "' + typeof aValue + '" ';
+        };
+        var testMap = function(aKey, aValue){
+          result = aValue;
+        };
+        this.processor.reduce('', testReducer).map(testMap);
+        expect(result).toEqual('one is of type "number" two is of type "function" three is of type "string" ');
+      });
+
+
+      it("returns ObjectTreeProcessor object", function() {
+        var result = this.processor.reduce(undefined, this.processIt);
+        expect(result).toBe(this.processor);
+      });
+    });
+  });
 });
 
 
