@@ -402,6 +402,51 @@ describe("ObjectTreeProcessor", function() {
       });
     });
   });
+
+  describe("flatten", function() {
+
+    beforeEach(function() {
+      this.someFunction = function () {};
+    });
+
+    describe("when collection is not empty", function() {
+      beforeEach(function() {
+        this.collection = {
+          'one' : 1,
+          'two' : this.someFunction,
+          'three' : 'A string value',
+          'four' : true,
+          'five' : {
+            'key1' : 'value1',
+            'key2' : 'value2'
+          },
+          'six' : [
+            'uno',
+            ['inside', 'arr'],
+            {'nice' : 'yes', 'hash' : 'it is'}
+          ]
+        };
+        this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
+      });
+
+      it("flattens out collection tree entirely", function() {
+        this.processor.flatten().map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('0', 1);
+        expect(this.processIt).toHaveBeenCalledWith('1', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('2', 'A string value');
+        expect(this.processIt).toHaveBeenCalledWith('3', true);
+        expect(this.processIt).toHaveBeenCalledWith('4', 'value1');
+        expect(this.processIt).toHaveBeenCalledWith('5', 'value2');
+        expect(this.processIt).toHaveBeenCalledWith('6', 'uno');
+        expect(this.processIt).toHaveBeenCalledWith('7', 'inside');
+        expect(this.processIt).toHaveBeenCalledWith('8', 'arr');
+        expect(this.processIt).toHaveBeenCalledWith('9', 'yes');
+        expect(this.processIt).toHaveBeenCalledWith('10', 'it is');
+        expect(this.processIt.calls.count()).toEqual(11);
+      });
+    });
+  });
 });
 
 

@@ -10,6 +10,18 @@ var isScalar = function(aCandidate){
   return (/^string|number|boolean|function$/).test(typeof aCandidate);
 };
 
+var processOwnedMembersOf = function(aCollection, aResult, aContext, aStrategy){
+  'use strict';
+  var each;
+
+  for (each in aCollection) {
+    if (!aCollection.hasOwnProperty(each)) {
+      continue;
+    }
+    aStrategy.apply(null, [aContext, each, aCollection[each], aResult]);
+  }
+};
+
 module.exports = function (aCollection){
   'use strict';
   var currentCollection = aCollection || {};
@@ -18,6 +30,7 @@ module.exports = function (aCollection){
   var map;
   var filter;
   var reduce;
+  var flatten;
 
   // produce consistent internal root of collection
   if(isScalar(aCollection)){
@@ -28,15 +41,9 @@ module.exports = function (aCollection){
 
   processOwnedMembers = function (thisArg, processFunction) {
     var context = typeof thisArg !== 'undefined' ? thisArg : null ;
-    var each ;
     var processed = {};
 
-    for (each in currentCollection) {
-      if (!currentCollection.hasOwnProperty(each)) {
-        continue;
-      }
-      processFunction.apply(null, [context, each, currentCollection[each], processed]);
-    }
+    processOwnedMembersOf(currentCollection, processed, context, processFunction);
     currentCollection = processed;
     return processor;
   };
@@ -66,10 +73,24 @@ module.exports = function (aCollection){
     });
   };
 
+  flatten = function () {
+    var counter = 0;
+    var flattenStrategy = function(aContext, aKey, aValue, aResultCollection){
+      if (isScalar(aValue)){
+        aResultCollection[counter.toString()] = aValue;
+        counter += 1;
+        return;
+      }
+      return processOwnedMembersOf(aValue, aResultCollection, undefined, flattenStrategy);
+    };
+    return processOwnedMembers(undefined, flattenStrategy); 
+  };
+
   processor = {
     'map' : map,
     'filter' : filter,
-    'reduce' : reduce
+    'reduce' : reduce,
+    'flatten' : flatten
   };
 
   return processor;
