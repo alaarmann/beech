@@ -445,6 +445,20 @@ describe("ObjectTreeProcessor", function() {
         expect(this.processIt).toHaveBeenCalledWith('10', 'it is');
         expect(this.processIt.calls.count()).toEqual(11);
       });
+
+      it("flattens out to a specified level of collection tree", function() {
+        this.processor.flatten(2).map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('0', 1);
+        expect(this.processIt).toHaveBeenCalledWith('1', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('2', 'A string value');
+        expect(this.processIt).toHaveBeenCalledWith('3', true);
+        expect(this.processIt).toHaveBeenCalledWith('4', 'value1');
+        expect(this.processIt).toHaveBeenCalledWith('5', 'value2');
+        expect(this.processIt).toHaveBeenCalledWith('6', 'uno');
+        expect(this.processIt).toHaveBeenCalledWith('7', ['inside', 'arr']);
+        expect(this.processIt).toHaveBeenCalledWith('8', {'nice' : 'yes', 'hash' : 'it is'});
+        expect(this.processIt.calls.count()).toEqual(9);
+      });
     });
   });
 });

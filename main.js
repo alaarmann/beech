@@ -10,7 +10,7 @@ var isScalar = function(aCandidate){
   return (/^string|number|boolean|function$/).test(typeof aCandidate);
 };
 
-var processOwnedMembersOf = function(aCollection, aResult, aContext, aStrategy){
+var processOwnedMembersOf = function(aCollection, aResult, aContext, aStrategy, aCurrentLevel){
   'use strict';
   var each;
 
@@ -18,7 +18,7 @@ var processOwnedMembersOf = function(aCollection, aResult, aContext, aStrategy){
     if (!aCollection.hasOwnProperty(each)) {
       continue;
     }
-    aStrategy.apply(null, [aContext, each, aCollection[each], aResult]);
+    aStrategy.apply(null, [aContext, each, aCollection[each], aResult, aCurrentLevel]);
   }
 };
 
@@ -42,8 +42,9 @@ module.exports = function (aCollection){
   processOwnedMembers = function (thisArg, processFunction) {
     var context = typeof thisArg !== 'undefined' ? thisArg : null ;
     var processed = {};
+    var rootLevel = 1;
 
-    processOwnedMembersOf(currentCollection, processed, context, processFunction);
+    processOwnedMembersOf(currentCollection, processed, context, processFunction, rootLevel);
     currentCollection = processed;
     return processor;
   };
@@ -73,15 +74,19 @@ module.exports = function (aCollection){
     });
   };
 
-  flatten = function () {
-    var counter = 0;
-    var flattenStrategy = function(aContext, aKey, aValue, aResultCollection){
-      if (isScalar(aValue)){
-        aResultCollection[counter.toString()] = aValue;
-        counter += 1;
+  flatten = function (aLevel) {
+    var itemCounter = 0;
+    var isLevelReached = function(aLevelToCheck){
+      return typeof aLevel !== 'undefined' && aLevelToCheck >= aLevel; 
+    };
+
+    var flattenStrategy = function(aContext, aKey, aValue, aResultCollection, aCurrentLevel){
+      if (isScalar(aValue) || isLevelReached(aCurrentLevel)){
+        aResultCollection[itemCounter.toString()] = aValue;
+        itemCounter += 1;
         return;
       }
-      return processOwnedMembersOf(aValue, aResultCollection, undefined, flattenStrategy);
+      return processOwnedMembersOf(aValue, aResultCollection, undefined, flattenStrategy, aCurrentLevel + 1);
     };
     return processOwnedMembers(undefined, flattenStrategy); 
   };
