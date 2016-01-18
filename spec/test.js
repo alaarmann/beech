@@ -59,10 +59,10 @@ describe("ObjectTreeProcessor", function() {
 
       it("applies function to each owned member", function() {
         this.processor.map(this.processIt);
-        expect(this.processIt).toHaveBeenCalledWith('0', 1);
-        expect(this.processIt).toHaveBeenCalledWith('1', this.someFunction);
-        expect(this.processIt).toHaveBeenCalledWith('2', 'A string value');
-        expect(this.processIt).toHaveBeenCalledWith('3', this.complexThing);
+        expect(this.processIt).toHaveBeenCalledWith(1);
+        expect(this.processIt).toHaveBeenCalledWith(this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('A string value');
+        expect(this.processIt).toHaveBeenCalledWith(this.complexThing);
         expect(this.processIt.calls.count()).toEqual(4);
       });
     });
@@ -77,7 +77,7 @@ describe("ObjectTreeProcessor", function() {
 
         it("applies function to each owned member", function() {
           this.processor.map(this.processIt);
-          expect(this.processIt).toHaveBeenCalledWith('0', this.collection);
+          expect(this.processIt).toHaveBeenCalledWith(this.collection);
           expect(this.processIt.calls.count()).toEqual(1);
         });
       });
@@ -91,7 +91,7 @@ describe("ObjectTreeProcessor", function() {
 
         it("applies function to each owned member", function() {
           this.processor.map(this.processIt);
-          expect(this.processIt).toHaveBeenCalledWith('0', this.collection);
+          expect(this.processIt).toHaveBeenCalledWith(this.collection);
           expect(this.processIt.calls.count()).toEqual(1);
         });
       });
@@ -105,7 +105,7 @@ describe("ObjectTreeProcessor", function() {
 
         it("applies function to each owned member", function() {
           this.processor.map(this.processIt);
-          expect(this.processIt).toHaveBeenCalledWith('0', this.collection);
+          expect(this.processIt).toHaveBeenCalledWith(this.collection);
           expect(this.processIt.calls.count()).toEqual(1);
         });
       });
@@ -118,7 +118,7 @@ describe("ObjectTreeProcessor", function() {
 
         it("applies function to each owned member", function() {
           this.processor.map(this.processIt);
-          expect(this.processIt).toHaveBeenCalledWith('0', this.collection);
+          expect(this.processIt).toHaveBeenCalledWith(this.collection);
           expect(this.processIt.calls.count()).toEqual(1);
         });
       });
@@ -377,18 +377,18 @@ describe("ObjectTreeProcessor", function() {
 
       it("applies function to each owned member", function() {
         this.processor.reduce(undefined, this.processIt);
-        expect(this.processIt).toHaveBeenCalledWith('one', 1, undefined);
-        expect(this.processIt).toHaveBeenCalledWith('two', this.someFunction, undefined);
-        expect(this.processIt).toHaveBeenCalledWith('three', 'A string value', undefined);
+        expect(this.processIt).toHaveBeenCalledWith(undefined, 'one', 1);
+        expect(this.processIt).toHaveBeenCalledWith(undefined, 'two', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith(undefined, 'three', 'A string value');
         expect(this.processIt.calls.count()).toEqual(3);
       });
 
       it("reduces members to single object", function() {
         var result;
-        var testReducer = function(aKey, aValue, aAccumulator){
+        var testReducer = function(aAccumulator, aKey, aValue){
           return aAccumulator + aKey + ' is of type "' + typeof aValue + '" ';
         };
-        var testMap = function(aKey, aValue){
+        var testMap = function(aValue){
           result = aValue;
         };
         this.processor.reduce('', testReducer).map(testMap);
@@ -432,32 +432,48 @@ describe("ObjectTreeProcessor", function() {
 
       it("flattens out collection tree entirely", function() {
         this.processor.flatten().map(this.processIt);
-        expect(this.processIt).toHaveBeenCalledWith('0', 1);
-        expect(this.processIt).toHaveBeenCalledWith('1', this.someFunction);
-        expect(this.processIt).toHaveBeenCalledWith('2', 'A string value');
-        expect(this.processIt).toHaveBeenCalledWith('3', true);
-        expect(this.processIt).toHaveBeenCalledWith('4', 'value1');
-        expect(this.processIt).toHaveBeenCalledWith('5', 'value2');
-        expect(this.processIt).toHaveBeenCalledWith('6', 'uno');
-        expect(this.processIt).toHaveBeenCalledWith('7', 'inside');
-        expect(this.processIt).toHaveBeenCalledWith('8', 'arr');
-        expect(this.processIt).toHaveBeenCalledWith('9', 'yes');
-        expect(this.processIt).toHaveBeenCalledWith('10', 'it is');
-        expect(this.processIt.calls.count()).toEqual(11);
+        expect(this.processIt).toHaveBeenCalledWith('one');
+        expect(this.processIt).toHaveBeenCalledWith(1);
+        expect(this.processIt).toHaveBeenCalledWith('two');
+        expect(this.processIt).toHaveBeenCalledWith(this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('three');
+        expect(this.processIt).toHaveBeenCalledWith('A string value');
+        expect(this.processIt).toHaveBeenCalledWith('four');
+        expect(this.processIt).toHaveBeenCalledWith(true);
+        expect(this.processIt).toHaveBeenCalledWith('five');
+        expect(this.processIt).toHaveBeenCalledWith('key1');
+        expect(this.processIt).toHaveBeenCalledWith('value1');
+        expect(this.processIt).toHaveBeenCalledWith('key2');
+        expect(this.processIt).toHaveBeenCalledWith('value2');
+        expect(this.processIt).toHaveBeenCalledWith('six');
+        expect(this.processIt).toHaveBeenCalledWith('uno');
+        expect(this.processIt).toHaveBeenCalledWith('inside');
+        expect(this.processIt).toHaveBeenCalledWith('arr');
+        expect(this.processIt).toHaveBeenCalledWith('nice');
+        expect(this.processIt).toHaveBeenCalledWith('yes');
+        expect(this.processIt).toHaveBeenCalledWith('hash');
+        expect(this.processIt).toHaveBeenCalledWith('it is');
+        expect(this.processIt.calls.count()).toEqual(21);
       });
 
       it("flattens out to a specified level of collection tree", function() {
         this.processor.flatten(2).map(this.processIt);
-        expect(this.processIt).toHaveBeenCalledWith('0', 1);
-        expect(this.processIt).toHaveBeenCalledWith('1', this.someFunction);
-        expect(this.processIt).toHaveBeenCalledWith('2', 'A string value');
-        expect(this.processIt).toHaveBeenCalledWith('3', true);
-        expect(this.processIt).toHaveBeenCalledWith('4', 'value1');
-        expect(this.processIt).toHaveBeenCalledWith('5', 'value2');
-        expect(this.processIt).toHaveBeenCalledWith('6', 'uno');
-        expect(this.processIt).toHaveBeenCalledWith('7', ['inside', 'arr']);
-        expect(this.processIt).toHaveBeenCalledWith('8', {'nice' : 'yes', 'hash' : 'it is'});
-        expect(this.processIt.calls.count()).toEqual(9);
+        expect(this.processIt).toHaveBeenCalledWith('one');
+        expect(this.processIt).toHaveBeenCalledWith(1);
+        expect(this.processIt).toHaveBeenCalledWith('two');
+        expect(this.processIt).toHaveBeenCalledWith(this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('three');
+        expect(this.processIt).toHaveBeenCalledWith('A string value');
+        expect(this.processIt).toHaveBeenCalledWith('four');
+        expect(this.processIt).toHaveBeenCalledWith(true);
+        expect(this.processIt).toHaveBeenCalledWith('five');
+        expect(this.processIt).toHaveBeenCalledWith('key1', 'value1');
+        expect(this.processIt).toHaveBeenCalledWith('key2', 'value2');
+        expect(this.processIt).toHaveBeenCalledWith('six');
+        expect(this.processIt).toHaveBeenCalledWith('uno');
+        expect(this.processIt).toHaveBeenCalledWith('inside', 'arr');
+        expect(this.processIt).toHaveBeenCalledWith({'nice' : 'yes', 'hash' : 'it is'});
+        expect(this.processIt.calls.count()).toEqual(15);
       });
     });
   });
