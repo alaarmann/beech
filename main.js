@@ -19,21 +19,16 @@ var processCollection = function(aCollection, aResult, aContext, aStrategy, aCur
   'use strict';
 
   var processScalar = function(aScalar, aResult, aContext, aStrategy, aCurrentLevel){
-    aResult = aStrategy.apply(null, [aContext, [aScalar], aResult, aCurrentLevel]);
+    aResult = aStrategy.apply(null, [aContext, {'value' : aScalar}, aResult, aCurrentLevel]);
     return aResult;
   };
 
   var processArray = function(aArray, aResult, aContext, aStrategy, aCurrentLevel){
     var index;
-    var each;
     var arrayLength = aArray.length;
 
     for (index = 0; index < arrayLength;index += 1) {
-      each = aArray[index];
-      if(!isArray(each)){
-        each = [each];
-      }
-      aResult = aStrategy.apply(null, [aContext, each, aResult, aCurrentLevel]);
+      aResult = aStrategy.apply(null, [aContext, {'value' : aArray[index]}, aResult, aCurrentLevel]);
     }
     return aResult;
   };
@@ -45,7 +40,7 @@ var processCollection = function(aCollection, aResult, aContext, aStrategy, aCur
       if (!aCollection.hasOwnProperty(each)) {
         continue;
       }
-      aResult = aStrategy.apply(null, [aContext, [each, aCollection[each]], aResult, aCurrentLevel]);
+      aResult = aStrategy.apply(null, [aContext, {'key' : each, 'value' : aCollection[each]}, aResult, aCurrentLevel]);
     }
     return aResult;
   };
@@ -59,6 +54,42 @@ var processCollection = function(aCollection, aResult, aContext, aStrategy, aCur
   }
 };
 
+/* 
+ * Function is responsible for creating the argument array (for use with apply())
+*/
+var createArgumentArray = function(aItem){
+  'use strict';
+  var result;
+
+  if (aItem.hasOwnProperty('key')){
+    result = [aItem.key, aItem.value];
+  } else {
+    result = [aItem.value];
+  }
+  return result;
+};
+
+var createCanonicalItem = function(aItem){
+  'use strict';
+  var result;
+
+  if (aItem.hasOwnProperty('key')){
+    result = [aItem.key, aItem.value];
+  } else {
+    result = aItem.value;
+  }
+  return result;
+};
+
+/* 
+ * Function is responsible for processing a single item
+*/
+var processItem = function(aContext, aFunction, aItem){
+  'use strict';
+  var argumentArray = createArgumentArray(aItem);
+  return aFunction.apply(aContext, argumentArray);
+};
+
 module.exports = function (aCollection){
   'use strict';
   var currentCollection = aCollection || [];
@@ -70,40 +101,52 @@ module.exports = function (aCollection){
   var flatten;
 
 
-  processOwnedMembers = function (thisArg, processFunction) {
+  processOwnedMembers = function (thisArg, processFunction, aEmptyResultCollection) {
     var context = typeof thisArg !== 'undefined' ? thisArg : null ;
-    var resultCollection = [];
+    var resultCollection = aEmptyResultCollection || [];
     var rootLevel = 1;
 
     currentCollection = processCollection(currentCollection, resultCollection, context, processFunction, rootLevel);
     return processor;
   };
 
-  map = function (functionArg, thisArg) {
-    return processOwnedMembers(thisArg, 
-      function(aContext, aArray, aResultCollection){
-        aResultCollection.push(functionArg.apply(aContext, aArray));
-        return aResultCollection;
-    });
+  map = function (aFunction, aContext) {
+    var mapStrategy = function(aContext, aItem, aResultCollection){
+      aResultCollection.push(processItem(aContext, aFunction, aItem));
+      return aResultCollection;
+    };
+    return processOwnedMembers(aContext, mapStrategy);
   };
 
-  filter = function (functionArg, thisArg) {
-    return processOwnedMembers(thisArg, 
-      function(aContext, aArray, aResultCollection){
-        if (functionArg.apply(aContext, aArray)){
-          aResultCollection.push(aArray);
+  filter = function (aFunction, aContext) {
+    var emptyResultCollection;
+    // if hash, keep the type
+    // TODO: also keep SCALAR?
+    if (!isScalar(currentCollection) && !isArray(currentCollection)){
+      emptyResultCollection = {};
+    }
+    var filterStrategy = function(aContext, aItem, aResultCollection){
+      if (processItem(aContext, aFunction, aItem)){
+        if (!isScalar(aResultCollection) && !isArray(aResultCollection)){ // is hash
+          aResultCollection[aItem.key] = aItem.value; 
+        } else {
+          aResultCollection.push(aItem);
         }
-        return aResultCollection;
-    });
+      }
+      return aResultCollection;
+    };
+
+    return processOwnedMembers(aContext, filterStrategy, emptyResultCollection);
   };
 
   reduce = function (startValueArg, functionArg, thisArg) {
     var accumulator = startValueArg;
-    return processOwnedMembers(thisArg, 
-      function(aContext, aArray){
-        accumulator = functionArg.apply(aContext, [accumulator].concat(aArray));
-        return accumulator;
-    });
+    var reduceStrategy = function(aContext, aItem){
+      accumulator = functionArg.apply(aContext, [accumulator].concat(createArgumentArray(aItem)));
+      return accumulator;
+    };
+
+    return processOwnedMembers(thisArg, reduceStrategy);
   };
 
   flatten = function (aLevel) {
@@ -111,19 +154,14 @@ module.exports = function (aCollection){
       return typeof aLevel !== 'undefined' && aLevelToCheck > aLevel; 
     };
 
-    var flattenStrategy = function(aContext, aArray, aResultCollection, aCurrentLevel){
-      if (isLevelReached(aCurrentLevel)){
-        aResultCollection.push(aArray);
+    var flattenStrategy = function(aContext, aItem, aResultCollection, aCurrentLevel){
+      var item = createCanonicalItem(aItem);
+
+      if (isScalar(item) || isLevelReached(aCurrentLevel)){
+        aResultCollection.push(item);
         return aResultCollection;
       }
-      if (aArray.length === 1 && isScalar(aArray[0])){
-        aResultCollection.push(aArray[0]);
-        return aResultCollection;
-      }
-      if (aArray.length === 1 && !isScalar(aArray[0])){
-        return processCollection(aArray[0], aResultCollection, undefined, flattenStrategy, aCurrentLevel + 1);
-      }
-      return processCollection(aArray, aResultCollection, undefined, flattenStrategy, aCurrentLevel + 1);
+      return processCollection(item, aResultCollection, undefined, flattenStrategy, aCurrentLevel + 1);
     };
     return processOwnedMembers(undefined, flattenStrategy); 
   };

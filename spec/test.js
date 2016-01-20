@@ -468,9 +468,32 @@ describe("ObjectTreeProcessor", function() {
         expect(this.processIt).toHaveBeenCalledWith('key2', 'value2');
         expect(this.processIt).toHaveBeenCalledWith('six');
         expect(this.processIt).toHaveBeenCalledWith('uno');
-        expect(this.processIt).toHaveBeenCalledWith('inside', 'arr');
+        expect(this.processIt).toHaveBeenCalledWith(['inside', 'arr']);
         expect(this.processIt).toHaveBeenCalledWith({'nice' : 'yes', 'hash' : 'it is'});
         expect(this.processIt.calls.count()).toEqual(15);
+      });
+    });
+    describe("when collection is an array of array of array of array", function() {
+      beforeEach(function() {
+        this.collection = [
+          'one',
+          [
+            [
+              ['two']
+            ]
+          ],
+          'three'
+        ];
+        this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
+      });
+
+      it("flattens out collection by one level", function() {
+        this.processor.flatten(1).map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('one');
+        expect(this.processIt).toHaveBeenCalledWith([['two']]);
+        expect(this.processIt).toHaveBeenCalledWith('three');
+        expect(this.processIt.calls.count()).toEqual(3);
       });
     });
   });
