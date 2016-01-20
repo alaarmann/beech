@@ -384,15 +384,12 @@ describe("ObjectTreeProcessor", function() {
       });
 
       it("reduces members to single object", function() {
-        var result;
         var testReducer = function(aAccumulator, aKey, aValue){
           return aAccumulator + aKey + ' is of type "' + typeof aValue + '" ';
         };
-        var testMap = function(aValue){
-          result = aValue;
-        };
-        this.processor.reduce('', testReducer).map(testMap);
-        expect(result).toEqual('one is of type "number" two is of type "function" three is of type "string" ');
+        this.processor.reduce('', testReducer).map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('one is of type "number" two is of type "function" three is of type "string" ');
+        expect(this.processIt.calls.count()).toEqual(1);
       });
 
 

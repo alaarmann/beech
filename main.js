@@ -19,7 +19,8 @@ var processCollection = function(aCollection, aResult, aContext, aStrategy, aCur
   'use strict';
 
   var processScalar = function(aScalar, aResult, aContext, aStrategy, aCurrentLevel){
-    aStrategy.apply(null, [aContext, [aScalar], aResult, aCurrentLevel]);
+    aResult = aStrategy.apply(null, [aContext, [aScalar], aResult, aCurrentLevel]);
+    return aResult;
   };
 
   var processArray = function(aArray, aResult, aContext, aStrategy, aCurrentLevel){
@@ -32,8 +33,9 @@ var processCollection = function(aCollection, aResult, aContext, aStrategy, aCur
       if(!isArray(each)){
         each = [each];
       }
-      aStrategy.apply(null, [aContext, each, aResult, aCurrentLevel]);
+      aResult = aStrategy.apply(null, [aContext, each, aResult, aCurrentLevel]);
     }
+    return aResult;
   };
 
   var processOwnedMembersOf = function(aCollection, aResult, aContext, aStrategy, aCurrentLevel){
@@ -43,16 +45,17 @@ var processCollection = function(aCollection, aResult, aContext, aStrategy, aCur
       if (!aCollection.hasOwnProperty(each)) {
         continue;
       }
-      aStrategy.apply(null, [aContext, [each, aCollection[each]], aResult, aCurrentLevel]);
+      aResult = aStrategy.apply(null, [aContext, [each, aCollection[each]], aResult, aCurrentLevel]);
     }
+    return aResult;
   };
 
   if(isScalar(aCollection)){
-    processScalar(aCollection, aResult, aContext, aStrategy, aCurrentLevel);
+    return processScalar(aCollection, aResult, aContext, aStrategy, aCurrentLevel);
   } else if (isArray(aCollection)){
-    processArray(aCollection, aResult, aContext, aStrategy, aCurrentLevel);
+    return processArray(aCollection, aResult, aContext, aStrategy, aCurrentLevel);
   } else {
-    processOwnedMembersOf(aCollection, aResult, aContext, aStrategy, aCurrentLevel);
+    return processOwnedMembersOf(aCollection, aResult, aContext, aStrategy, aCurrentLevel);
   }
 };
 
@@ -69,11 +72,10 @@ module.exports = function (aCollection){
 
   processOwnedMembers = function (thisArg, processFunction) {
     var context = typeof thisArg !== 'undefined' ? thisArg : null ;
-    var processed = [];
+    var resultCollection = [];
     var rootLevel = 1;
 
-    processCollection(currentCollection, processed, context, processFunction, rootLevel);
-    currentCollection = processed;
+    currentCollection = processCollection(currentCollection, resultCollection, context, processFunction, rootLevel);
     return processor;
   };
 
@@ -81,6 +83,7 @@ module.exports = function (aCollection){
     return processOwnedMembers(thisArg, 
       function(aContext, aArray, aResultCollection){
         aResultCollection.push(functionArg.apply(aContext, aArray));
+        return aResultCollection;
     });
   };
 
@@ -90,15 +93,16 @@ module.exports = function (aCollection){
         if (functionArg.apply(aContext, aArray)){
           aResultCollection.push(aArray);
         }
+        return aResultCollection;
     });
   };
 
   reduce = function (startValueArg, functionArg, thisArg) {
     var accumulator = startValueArg;
     return processOwnedMembers(thisArg, 
-      function(aContext, aArray, aResult){
+      function(aContext, aArray){
         accumulator = functionArg.apply(aContext, [accumulator].concat(aArray));
-        aResult.push(accumulator);
+        return accumulator;
     });
   };
 
@@ -110,11 +114,11 @@ module.exports = function (aCollection){
     var flattenStrategy = function(aContext, aArray, aResultCollection, aCurrentLevel){
       if (isLevelReached(aCurrentLevel)){
         aResultCollection.push(aArray);
-        return;
+        return aResultCollection;
       }
       if (aArray.length === 1 && isScalar(aArray[0])){
         aResultCollection.push(aArray[0]);
-        return;
+        return aResultCollection;
       }
       if (aArray.length === 1 && !isScalar(aArray[0])){
         return processCollection(aArray[0], aResultCollection, undefined, flattenStrategy, aCurrentLevel + 1);
