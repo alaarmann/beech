@@ -94,14 +94,14 @@ module.exports = function (aCollection){
   'use strict';
   var currentCollection = aCollection || [];
   var processor;
-  var processOwnedMembers;
+  var applyToCollection;
   var map;
   var filter;
   var reduce;
   var flatten;
 
 
-  processOwnedMembers = function (thisArg, processFunction, aEmptyResultCollection) {
+  applyToCollection = function (thisArg, processFunction, aEmptyResultCollection) {
     var context = typeof thisArg !== 'undefined' ? thisArg : null ;
     var resultCollection = aEmptyResultCollection || [];
     var rootLevel = 1;
@@ -115,7 +115,7 @@ module.exports = function (aCollection){
       aResultCollection.push(processItem(aContext, aFunction, aItem));
       return aResultCollection;
     };
-    return processOwnedMembers(aContext, mapStrategy);
+    return applyToCollection(aContext, mapStrategy);
   };
 
   filter = function (aFunction, aContext) {
@@ -136,7 +136,7 @@ module.exports = function (aCollection){
       return aResultCollection;
     };
 
-    return processOwnedMembers(aContext, filterStrategy, emptyResultCollection);
+    return applyToCollection(aContext, filterStrategy, emptyResultCollection);
   };
 
   reduce = function (startValueArg, functionArg, thisArg) {
@@ -146,7 +146,7 @@ module.exports = function (aCollection){
       return accumulator;
     };
 
-    return processOwnedMembers(thisArg, reduceStrategy);
+    return applyToCollection(thisArg, reduceStrategy);
   };
 
   flatten = function (aLevel) {
@@ -163,7 +163,7 @@ module.exports = function (aCollection){
       }
       return processCollection(item, aResultCollection, undefined, flattenStrategy, aCurrentLevel + 1);
     };
-    return processOwnedMembers(undefined, flattenStrategy); 
+    return applyToCollection(undefined, flattenStrategy); 
   };
 
   processor = {
