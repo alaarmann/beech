@@ -15,7 +15,7 @@ var isArray = function(aCandidate){
   return Object.prototype.toString.call( aCandidate ) === '[object Array]';
 };
 
-var processCollection = function(aCollection, aResult, aContext, aStrategy, aCurrentLevel) {
+var processRawCollection = function(aCollection, aResult, aContext, aStrategy, aCurrentLevel) {
   'use strict';
 
   var processScalar = function(aScalar, aResult, aContext, aStrategy, aCurrentLevel){
@@ -54,6 +54,21 @@ var processCollection = function(aCollection, aResult, aContext, aStrategy, aCur
   }
 };
 
+/*
+ * Function processes 'beech collection' (array of objects that have member 'value' and possibly also 'key')
+ */
+var processBeechCollection = function(aArray, aResult, aContext, aStrategy, aCurrentLevel) {
+  'use strict';
+
+  var index;
+  var arrayLength = aArray.length;
+
+  for (index = 0; index < arrayLength;index += 1) {
+    aResult = aStrategy.apply(null, [aContext, aArray[index], aResult, aCurrentLevel]);
+  }
+  return aResult;
+};
+
 /* 
  * Function is responsible for creating the argument array (for use with apply())
 */
@@ -81,6 +96,11 @@ var createCanonicalItem = function(aItem){
   return result;
 };
 
+var isKeyValue = function(aItem){
+  'use strict';
+  return aItem.hasOwnProperty('key') && aItem.hasOwnProperty('value');
+};
+
 /* 
  * Function is responsible for processing a single item
 */
@@ -95,11 +115,14 @@ module.exports = function (aCollection){
   var currentCollection = aCollection || [];
   var processor;
   var applyToCollection;
+  var processCollection;
   var map;
   var filter;
   var reduce;
   var flatten;
 
+  // Initial state is a 'raw' JavaScript-collection
+  processCollection = processRawCollection;
 
   applyToCollection = function (thisArg, processFunction, aEmptyResultCollection) {
     var context = typeof thisArg !== 'undefined' ? thisArg : null ;
@@ -107,43 +130,45 @@ module.exports = function (aCollection){
     var rootLevel = 1;
 
     currentCollection = processCollection(currentCollection, resultCollection, context, processFunction, rootLevel);
+
+    if (processCollection === processRawCollection){
+      processCollection = processBeechCollection;
+    }
     return processor;
   };
 
   map = function (aFunction, aContext) {
     var mapStrategy = function(aContext, aItem, aResultCollection){
-      aResultCollection.push(processItem(aContext, aFunction, aItem));
+      var resultValue = processItem(aContext, aFunction, aItem);
+      // TODO: this is arbitrary. What about using this.context in aFunction for delivering this.key and this.value?
+      if (isKeyValue(aItem) && isArray(resultValue) && resultValue.length === 2){
+        resultValue = {key : resultValue[0], value :  resultValue[1]};
+      } else {
+        resultValue = {value :  resultValue};
+      }
+      aResultCollection.push(resultValue);
       return aResultCollection;
     };
     return applyToCollection(aContext, mapStrategy);
   };
 
   filter = function (aFunction, aContext) {
-    var emptyResultCollection;
-    // if hash, keep the type
-    // TODO: also keep SCALAR?
-    if (!isScalar(currentCollection) && !isArray(currentCollection)){
-      emptyResultCollection = {};
-    }
     var filterStrategy = function(aContext, aItem, aResultCollection){
       if (processItem(aContext, aFunction, aItem)){
-        if (!isScalar(aResultCollection) && !isArray(aResultCollection)){ // is hash
-          aResultCollection[aItem.key] = aItem.value; 
-        } else {
-          aResultCollection.push(aItem);
-        }
+        aResultCollection.push(aItem);
       }
       return aResultCollection;
     };
 
-    return applyToCollection(aContext, filterStrategy, emptyResultCollection);
+    return applyToCollection(aContext, filterStrategy);
   };
 
   reduce = function (startValueArg, functionArg, thisArg) {
-    var accumulator = startValueArg;
+    var accumulator = {};
+    accumulator.value = startValueArg;
     var reduceStrategy = function(aContext, aItem){
-      accumulator = functionArg.apply(aContext, [accumulator].concat(createArgumentArray(aItem)));
-      return accumulator;
+      accumulator.value = functionArg.apply(aContext, [accumulator.value].concat(createArgumentArray(aItem)));
+      return [accumulator];
     };
 
     return applyToCollection(thisArg, reduceStrategy);
@@ -158,10 +183,12 @@ module.exports = function (aCollection){
       var item = createCanonicalItem(aItem);
 
       if (isScalar(item) || isLevelReached(aCurrentLevel)){
-        aResultCollection.push(item);
+        // root level in output is always a 'beech' collection
+        aResultCollection.push(aItem);
         return aResultCollection;
       }
-      return processCollection(item, aResultCollection, undefined, flattenStrategy, aCurrentLevel + 1);
+      // next level is always a 'raw' JavaScript collection
+      return processRawCollection(item, aResultCollection, undefined, flattenStrategy, aCurrentLevel + 1);
     };
     return applyToCollection(undefined, flattenStrategy); 
   };
