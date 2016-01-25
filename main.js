@@ -115,6 +115,7 @@ module.exports = function (aCollection){
   var filter;
   var reduce;
   var flatten;
+  var concat;
 
   // Initial state is a 'raw' JavaScript-collection
   processCollection = processRawCollection;
@@ -193,11 +194,25 @@ module.exports = function (aCollection){
     return applyToCollection(flattenStrategy); 
   };
 
+  concat = function (aCollection) {
+    var insertStrategy = function(aItem, aResultCollection){
+      aResultCollection.push(aItem);
+      return aResultCollection;
+    };
+    // insert items of currentCollection into result
+    applyToCollection(insertStrategy);
+    // insert items of aCollection into result
+    processRawCollection(aCollection, currentCollection, insertStrategy);
+
+    return processor;
+  };
+
   processor = {
     'map' : map,
     'filter' : filter,
     'reduce' : reduce,
-    'flatten' : flatten
+    'flatten' : flatten,
+    'concat' : concat
   };
 
   return processor;

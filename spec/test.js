@@ -447,6 +447,41 @@ describe("ObjectTreeProcessor", function() {
       });
     });
   });
+
+  describe("concat", function() {
+
+    beforeEach(function() {
+      this.someFunction = function () {};
+    });
+
+    describe("when collections are hashes", function() {
+      beforeEach(function() {
+        this.collection = {
+          'one' : 1,
+          'two' : this.someFunction,
+          'three' : 'A string value'
+        };
+        this.otherCollection = {
+          'one' : 1,
+          'deux' : this.someFunction,
+          'tre' : 'A string value'
+        };
+        this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
+      });
+
+      it("applies function to each owned member", function() {
+        this.processor.concat(this.otherCollection).map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('one', 1);
+        expect(this.processIt).toHaveBeenCalledWith('two', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('three', 'A string value');
+        expect(this.processIt).toHaveBeenCalledWith('one', 1);
+        expect(this.processIt).toHaveBeenCalledWith('deux', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('tre', 'A string value');
+        expect(this.processIt.calls.count()).toEqual(6);
+      });
+    });
+  });
 });
 
 
