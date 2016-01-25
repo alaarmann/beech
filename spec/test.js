@@ -38,6 +38,32 @@ describe("ObjectTreeProcessor", function() {
         var result = this.processor.map(this.processIt);
         expect(result).toBe(this.processor);
       });
+
+      it("puts return value of callback into resulting collection", function() {
+        var callback = function(aKey, aValue){
+          return aKey + ' ' + typeof(aValue);
+        };
+        this.processor.map(callback).map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('one number');
+        expect(this.processIt).toHaveBeenCalledWith('two function');
+        expect(this.processIt).toHaveBeenCalledWith('three string');
+        expect(this.processIt.calls.count()).toEqual(3);
+      });
+
+      it("puts key-value-pairs assigned to this into resulting collection", function() {
+        var callback = function(aKey, aValue){
+          this[aKey] = aValue;
+          this[aKey + 'x'] = aValue;
+        };
+        this.processor.map(callback).map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('one', 1);
+        expect(this.processIt).toHaveBeenCalledWith('onex', 1);
+        expect(this.processIt).toHaveBeenCalledWith('two', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('twox', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('three', 'A string value');
+        expect(this.processIt).toHaveBeenCalledWith('threex', 'A string value');
+        expect(this.processIt.calls.count()).toEqual(6);
+      });
     });
 
     describe("when collection is an array", function() {
@@ -156,44 +182,6 @@ describe("ObjectTreeProcessor", function() {
       });
     });
 
-    describe("when this-pointer provided", function() {
-      var thisContextProvided;
-      var thisContextInFunction;
-
-      beforeEach(function() {
-        thisContextProvided = {a : 'R'};
-        thisContextInFunction = undefined;
-        this.processIt = function (key, value) {
-	  thisContextInFunction = this;
-          this.a +=  value;
-        };
-        this.collection = {b : 'OMA'};
-        this.processor = createObjectTreeProcessor(this.collection);
-      });
-      it("applies function bound to this-pointer provided", function() {
-        this.processor.map(this.processIt, thisContextProvided);
-        expect(thisContextInFunction).toBe(thisContextProvided);
-        expect(thisContextProvided.a).toEqual('ROMA');
-      });
-    });
-
-    describe("when this-pointer not provided", function() {
-      var thisContextInFunction;
-
-      beforeEach(function() {
-        thisContextInFunction = undefined;
-        this.processIt = function () {
-	  thisContextInFunction = this;
-        };
-        this.collection = {b : 'OMA'};
-        this.processor = createObjectTreeProcessor(this.collection);
-      });
-      it("applies function bound to null-context", function() {
-        this.processor.map(this.processIt);
-        expect(thisContextInFunction).toBe(null);
-      });
-    });
-
     describe("when no function-argument provided", function() {
 
       beforeEach(function() {
@@ -292,44 +280,6 @@ describe("ObjectTreeProcessor", function() {
       it("returns ObjectTreeProcessor object", function() {
         var result = this.processor.filter(this.processIt);
         expect(result).toBe(this.processor);
-      });
-    });
-
-    describe("when this-pointer provided", function() {
-      var thisContextProvided;
-      var thisContextInFunction;
-
-      beforeEach(function() {
-        thisContextProvided = {a : 'R'};
-        thisContextInFunction = undefined;
-        this.processIt = function (key, value) {
-	  thisContextInFunction = this;
-          this.a +=  value;
-        };
-        this.collection = {b : 'OMA'};
-        this.processor = createObjectTreeProcessor(this.collection);
-      });
-      it("applies function bound to this-pointer provided", function() {
-        this.processor.filter(this.processIt, thisContextProvided);
-        expect(thisContextInFunction).toBe(thisContextProvided);
-        expect(thisContextProvided.a).toEqual('ROMA');
-      });
-    });
-
-    describe("when this-pointer not provided", function() {
-      var thisContextInFunction;
-
-      beforeEach(function() {
-        thisContextInFunction = undefined;
-        this.processIt = function () {
-	  thisContextInFunction = this;
-        };
-        this.collection = {b : 'OMA'};
-        this.processor = createObjectTreeProcessor(this.collection);
-      });
-      it("applies function bound to null-context", function() {
-        this.processor.filter(this.processIt);
-        expect(thisContextInFunction).toBe(null);
       });
     });
 

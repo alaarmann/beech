@@ -15,56 +15,56 @@ var isArray = function(aCandidate){
   return Object.prototype.toString.call( aCandidate ) === '[object Array]';
 };
 
-var processRawCollection = function(aCollection, aResult, aContext, aStrategy, aCurrentLevel) {
+var processRawCollection = function(aCollection, aResult, aStrategy, aCurrentLevel) {
   'use strict';
 
-  var processScalar = function(aScalar, aResult, aContext, aStrategy, aCurrentLevel){
-    aResult = aStrategy.apply(null, [aContext, {'value' : aScalar}, aResult, aCurrentLevel]);
+  var processScalar = function(aScalar, aResult, aStrategy, aCurrentLevel){
+    aResult = aStrategy.apply(null, [{'value' : aScalar}, aResult, aCurrentLevel]);
     return aResult;
   };
 
-  var processArray = function(aArray, aResult, aContext, aStrategy, aCurrentLevel){
+  var processArray = function(aArray, aResult, aStrategy, aCurrentLevel){
     var index;
     var arrayLength = aArray.length;
 
     for (index = 0; index < arrayLength;index += 1) {
-      aResult = aStrategy.apply(null, [aContext, {'value' : aArray[index]}, aResult, aCurrentLevel]);
+      aResult = aStrategy.apply(null, [{'value' : aArray[index]}, aResult, aCurrentLevel]);
     }
     return aResult;
   };
 
-  var processOwnedMembersOf = function(aCollection, aResult, aContext, aStrategy, aCurrentLevel){
+  var processOwnedMembersOf = function(aCollection, aResult, aStrategy, aCurrentLevel){
     var each;
 
     for (each in aCollection) {
       if (!aCollection.hasOwnProperty(each)) {
         continue;
       }
-      aResult = aStrategy.apply(null, [aContext, {'key' : each, 'value' : aCollection[each]}, aResult, aCurrentLevel]);
+      aResult = aStrategy.apply(null, [{'key' : each, 'value' : aCollection[each]}, aResult, aCurrentLevel]);
     }
     return aResult;
   };
 
   if(isScalar(aCollection)){
-    return processScalar(aCollection, aResult, aContext, aStrategy, aCurrentLevel);
+    return processScalar(aCollection, aResult, aStrategy, aCurrentLevel);
   } else if (isArray(aCollection)){
-    return processArray(aCollection, aResult, aContext, aStrategy, aCurrentLevel);
+    return processArray(aCollection, aResult, aStrategy, aCurrentLevel);
   } else {
-    return processOwnedMembersOf(aCollection, aResult, aContext, aStrategy, aCurrentLevel);
+    return processOwnedMembersOf(aCollection, aResult, aStrategy, aCurrentLevel);
   }
 };
 
 /*
  * Function processes 'beech collection' (array of objects that have member 'value' and possibly also 'key')
  */
-var processBeechCollection = function(aArray, aResult, aContext, aStrategy, aCurrentLevel) {
+var processBeechCollection = function(aArray, aResult, aStrategy, aCurrentLevel) {
   'use strict';
 
   var index;
   var arrayLength = aArray.length;
 
   for (index = 0; index < arrayLength;index += 1) {
-    aResult = aStrategy.apply(null, [aContext, aArray[index], aResult, aCurrentLevel]);
+    aResult = aStrategy.apply(null, [aArray[index], aResult, aCurrentLevel]);
   }
   return aResult;
 };
@@ -96,11 +96,6 @@ var createCanonicalItem = function(aItem){
   return result;
 };
 
-var isKeyValue = function(aItem){
-  'use strict';
-  return aItem.hasOwnProperty('key') && aItem.hasOwnProperty('value');
-};
-
 /* 
  * Function is responsible for processing a single item
 */
@@ -124,12 +119,11 @@ module.exports = function (aCollection){
   // Initial state is a 'raw' JavaScript-collection
   processCollection = processRawCollection;
 
-  applyToCollection = function (thisArg, processFunction, aEmptyResultCollection) {
-    var context = typeof thisArg !== 'undefined' ? thisArg : null ;
+  applyToCollection = function (processFunction, aEmptyResultCollection) {
     var resultCollection = aEmptyResultCollection || [];
     var rootLevel = 1;
 
-    currentCollection = processCollection(currentCollection, resultCollection, context, processFunction, rootLevel);
+    currentCollection = processCollection(currentCollection, resultCollection, processFunction, rootLevel);
 
     if (processCollection === processRawCollection){
       processCollection = processBeechCollection;
@@ -137,41 +131,47 @@ module.exports = function (aCollection){
     return processor;
   };
 
-  map = function (aFunction, aContext) {
-    var mapStrategy = function(aContext, aItem, aResultCollection){
-      var resultValue = processItem(aContext, aFunction, aItem);
-      // TODO: this is arbitrary. What about using this.context in aFunction for delivering this.key and this.value?
-      if (isKeyValue(aItem) && isArray(resultValue) && resultValue.length === 2){
-        resultValue = {key : resultValue[0], value :  resultValue[1]};
-      } else {
-        resultValue = {value :  resultValue};
+  map = function (aFunction) {
+    var mapStrategy = function(aItem, aResultCollection){
+      var context = {};
+      var each;
+      var resultValue = processItem(context, aFunction, aItem);
+
+      if (typeof resultValue !== 'undefined'){
+        aResultCollection.push({value :  resultValue});
+      } else { // if no return-value delivered, add members of context
+        for (each in context) {
+          if (!context.hasOwnProperty(each)) {
+            continue;
+          }
+          aResultCollection.push({key : each, value :  context[each]});          
+        }
       }
-      aResultCollection.push(resultValue);
       return aResultCollection;
     };
-    return applyToCollection(aContext, mapStrategy);
+    return applyToCollection(mapStrategy);
   };
 
-  filter = function (aFunction, aContext) {
-    var filterStrategy = function(aContext, aItem, aResultCollection){
-      if (processItem(aContext, aFunction, aItem)){
+  filter = function (aFunction) {
+    var filterStrategy = function(aItem, aResultCollection){
+      if (processItem(null, aFunction, aItem)){
         aResultCollection.push(aItem);
       }
       return aResultCollection;
     };
 
-    return applyToCollection(aContext, filterStrategy);
+    return applyToCollection(filterStrategy);
   };
 
-  reduce = function (startValueArg, functionArg, thisArg) {
+  reduce = function (startValueArg, functionArg) {
     var accumulator = {};
     accumulator.value = startValueArg;
-    var reduceStrategy = function(aContext, aItem){
-      accumulator.value = functionArg.apply(aContext, [accumulator.value].concat(createArgumentArray(aItem)));
+    var reduceStrategy = function(aItem){
+      accumulator.value = functionArg.apply(null, [accumulator.value].concat(createArgumentArray(aItem)));
       return [accumulator];
     };
 
-    return applyToCollection(thisArg, reduceStrategy);
+    return applyToCollection(reduceStrategy);
   };
 
   flatten = function (aLevel) {
@@ -179,7 +179,7 @@ module.exports = function (aCollection){
       return typeof aLevel !== 'undefined' && aLevelToCheck > aLevel; 
     };
 
-    var flattenStrategy = function(aContext, aItem, aResultCollection, aCurrentLevel){
+    var flattenStrategy = function(aItem, aResultCollection, aCurrentLevel){
       var item = createCanonicalItem(aItem);
 
       if (isScalar(item) || isLevelReached(aCurrentLevel)){
@@ -188,9 +188,9 @@ module.exports = function (aCollection){
         return aResultCollection;
       }
       // next level is always a 'raw' JavaScript collection
-      return processRawCollection(item, aResultCollection, undefined, flattenStrategy, aCurrentLevel + 1);
+      return processRawCollection(item, aResultCollection, flattenStrategy, aCurrentLevel + 1);
     };
-    return applyToCollection(undefined, flattenStrategy); 
+    return applyToCollection(flattenStrategy); 
   };
 
   processor = {
