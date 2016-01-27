@@ -579,6 +579,67 @@ describe("ObjectTreeProcessor", function() {
       });
     });
   });
+
+  describe("intersection", function() {
+
+    beforeEach(function() {
+      this.someFunction = function () {};
+      this.someObject = {'key1' : 'value1', 'key2' : 'value2'};
+    });
+
+    describe("when collections are hashes", function() {
+      beforeEach(function() {
+        this.collection = {
+          'one' : 1,
+          'two' : this.someFunction,
+          'three' : 'A string value',
+          'four' : this.someObject
+        };
+        this.otherCollection = {
+          'one' : 1,
+          'deux' : this.someFunction,
+          'four' : this.someObject
+        };
+        this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
+      });
+
+      it("retains only members (key-value-pairs) of supplied collection in result collection", function() {
+        this.processor.intersection(this.otherCollection).map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('one', 1);
+        expect(this.processIt).toHaveBeenCalledWith('four', this.someObject);
+        expect(this.processIt.calls.count()).toEqual(2);
+      });
+    });
+
+    describe("when multiple collections are specified", function() {
+      beforeEach(function() {
+        this.collection = {
+          'one' : 1,
+          'two' : this.someFunction,
+          'three' : 'A string value'
+        };
+        this.otherCollection = {
+          'one' : 1,
+          'deux' : this.someFunction,
+          'three' : 'A string value'
+        };
+        this.yetAnOtherCollection = {
+          'cien' : 100,
+          'dos' : this.someFunction,
+          'three' : 'A string value'
+        };
+        this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
+      });
+
+      it("retains members (key-value-pairs) of sequentially processed collections in respective result collection", function() {
+        this.processor.intersection(this.otherCollection, this.yetAnOtherCollection).map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('three', 'A string value');
+        expect(this.processIt.calls.count()).toEqual(1);
+      });
+    });
+  });
 });
 
 

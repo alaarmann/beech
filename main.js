@@ -134,6 +134,7 @@ module.exports = function (aCollection){
   var flatten;
   var concat;
   var difference;
+  var intersection;
 
   // Initial state is a 'raw' JavaScript-collection
   processCollection = processRawCollection;
@@ -260,13 +261,39 @@ module.exports = function (aCollection){
     return processor;
   };
 
+  intersection = function () {
+    var index;
+    var createRetainStrategy = function (aSuppliedCollection){
+      // function processes each item of current collection
+      return function(aItem, aResultCollection){
+        // function processes each item of supplied collection
+        var retainItem = function(aItemOfSuppliedCollection, aResultCollection){
+          if (isEqual(aItemOfSuppliedCollection, aItem)){
+            aResultCollection.push(aItem);
+          }
+          return aResultCollection;
+        };
+        aResultCollection = processRawCollection(aSuppliedCollection, aResultCollection, retainItem);
+        return aResultCollection;
+      };
+    };
+    // intersection sees supplied arguments as collections
+    // retain items of supplied collection in respective result
+    for (index = 0; index < arguments.length;index += 1) {
+      applyToCollection(createRetainStrategy(arguments[index]));
+    }
+
+    return processor;
+  };
+
   processor = {
     'map' : map,
     'filter' : filter,
     'reduce' : reduce,
     'flatten' : flatten,
     'concat' : concat,
-    'difference' : difference
+    'difference' : difference,
+    'intersection' : intersection
   };
 
   return processor;
