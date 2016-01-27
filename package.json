@@ -1,7 +1,7 @@
 {
   "name": "beech",
   "version": "0.2.0",
-  "description": "A JavaScript object-tree processor",
+  "description": "A JavaScript object-tree processor a.k.a. collection pipeline",
   "main": "main.js",
   "scripts": {
     "test": "gulp"
