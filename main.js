@@ -105,6 +105,23 @@ var processItem = function(aContext, aFunction, aItem){
   return aFunction.apply(aContext, argumentArray);
 };
 
+var isEqual = function(aItem, aOtherItem){
+  'use strict';
+  var key = aItem.key;
+  var value = aItem.value;
+  var otherKey = aOtherItem.key;
+  var otherValue = aOtherItem.value;
+
+  if (value === otherValue){
+    if (typeof key !== 'undefined' && typeof otherKey !== 'undefined'){
+      return key === otherKey;
+    } else {
+      return (typeof key === 'undefined' && typeof otherKey === 'undefined');
+    }
+  }
+  return false;
+};
+
 module.exports = function (aCollection){
   'use strict';
   var currentCollection = aCollection || [];
@@ -116,6 +133,7 @@ module.exports = function (aCollection){
   var reduce;
   var flatten;
   var concat;
+  var difference;
 
   // Initial state is a 'raw' JavaScript-collection
   processCollection = processRawCollection;
@@ -211,12 +229,44 @@ module.exports = function (aCollection){
     return processor;
   };
 
+  difference = function () {
+    var index;
+    var insertStrategy = function(aItem, aResultCollection){
+      aResultCollection.push(aItem);
+      return aResultCollection;
+    };
+    var removeStrategy = function(aItem, aResultCollection){
+      var index;
+      for (index = 0; index < aResultCollection.length;index += 1) {
+        if (isEqual(aResultCollection[index], aItem)){
+          break;
+        }
+      }
+      if (index === aResultCollection.length){
+        return aResultCollection;
+      } else {
+        aResultCollection.splice(index, 1);
+        return removeStrategy(aItem, aResultCollection);
+      }
+    };
+    // insert items of currentCollection into result
+    applyToCollection(insertStrategy);
+    // difference sees supplied arguments as collections
+    // remove items of supplied collections from result
+    for (index = 0; index < arguments.length;index += 1) {
+      processRawCollection(arguments[index], currentCollection, removeStrategy);
+    }
+
+    return processor;
+  };
+
   processor = {
     'map' : map,
     'filter' : filter,
     'reduce' : reduce,
     'flatten' : flatten,
-    'concat' : concat
+    'concat' : concat,
+    'difference' : difference
   };
 
   return processor;

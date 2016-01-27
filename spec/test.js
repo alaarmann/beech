@@ -518,6 +518,67 @@ describe("ObjectTreeProcessor", function() {
       });
     });
   });
+
+  describe("difference", function() {
+
+    beforeEach(function() {
+      this.someFunction = function () {};
+      this.someObject = {'key1' : 'value1', 'key2' : 'value2'};
+    });
+
+    describe("when collections are hashes", function() {
+      beforeEach(function() {
+        this.collection = {
+          'one' : 1,
+          'two' : this.someFunction,
+          'three' : 'A string value',
+          'four' : this.someObject
+        };
+        this.otherCollection = {
+          'one' : 1,
+          'deux' : this.someFunction,
+          'three' : 'A string value'
+        };
+        this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
+      });
+
+      it("removes members (key-value-pairs) of supplied collection from result collection", function() {
+        this.processor.difference(this.otherCollection).map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('two', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('four', this.someObject);
+        expect(this.processIt.calls.count()).toEqual(2);
+      });
+    });
+
+    describe("when multiple collections are specified", function() {
+      beforeEach(function() {
+        this.collection = {
+          'one' : 1,
+          'two' : this.someFunction,
+          'three' : 'A string value'
+        };
+        this.otherCollection = {
+          'one' : 1,
+          'deux' : this.someFunction,
+          'tre' : 'A string value'
+        };
+        this.yetAnOtherCollection = {
+          'cien' : 100,
+          'dos' : this.someFunction,
+          'three' : 'A string value'
+        };
+        this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
+      });
+
+      it("removes the members (key-value-pairs) of all supplied collections from result collection", function() {
+        this.processor.difference(this.otherCollection, this.yetAnOtherCollection).map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('two', this.someFunction);
+        expect(this.processIt.calls.count()).toEqual(1);
+      });
+    });
+  });
 });
 
 
