@@ -481,6 +481,42 @@ describe("ObjectTreeProcessor", function() {
         expect(this.processIt.calls.count()).toEqual(6);
       });
     });
+
+    describe("when multiple collections are specified", function() {
+      beforeEach(function() {
+        this.collection = {
+          'one' : 1,
+          'two' : this.someFunction,
+          'three' : 'A string value'
+        };
+        this.otherCollection = {
+          'one' : 1,
+          'deux' : this.someFunction,
+          'tre' : 'A string value'
+        };
+        this.yetAnOtherCollection = {
+          'cien' : 100,
+          'dos' : this.someFunction,
+          'tres' : 'Yet another string value'
+        };
+        this.processor = createObjectTreeProcessor(this.collection);
+        this.processIt = jasmine.createSpy();
+      });
+
+      it("concatenates the members (key-value-pairs)", function() {
+        this.processor.concat(this.otherCollection, this.yetAnOtherCollection).map(this.processIt);
+        expect(this.processIt).toHaveBeenCalledWith('one', 1);
+        expect(this.processIt).toHaveBeenCalledWith('two', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('three', 'A string value');
+        expect(this.processIt).toHaveBeenCalledWith('one', 1);
+        expect(this.processIt).toHaveBeenCalledWith('deux', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('tre', 'A string value');
+        expect(this.processIt).toHaveBeenCalledWith('cien', 100);
+        expect(this.processIt).toHaveBeenCalledWith('dos', this.someFunction);
+        expect(this.processIt).toHaveBeenCalledWith('tres', 'Yet another string value');
+        expect(this.processIt.calls.count()).toEqual(9);
+      });
+    });
   });
 });
 

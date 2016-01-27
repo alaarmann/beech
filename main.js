@@ -194,15 +194,19 @@ module.exports = function (aCollection){
     return applyToCollection(flattenStrategy); 
   };
 
-  concat = function (aCollection) {
+  concat = function () {
+    var index;
     var insertStrategy = function(aItem, aResultCollection){
       aResultCollection.push(aItem);
       return aResultCollection;
     };
     // insert items of currentCollection into result
     applyToCollection(insertStrategy);
-    // insert items of aCollection into result
-    processRawCollection(aCollection, currentCollection, insertStrategy);
+    // concat sees supplied arguments as collections
+    // insert items of supplied collections into result
+    for (index = 0; index < arguments.length;index += 1) {
+      processRawCollection(arguments[index], currentCollection, insertStrategy);
+    }
 
     return processor;
   };
