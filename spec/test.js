@@ -470,7 +470,7 @@ describe("ObjectTreeProcessor", function() {
         this.processIt = jasmine.createSpy();
       });
 
-      it("applies function to each owned member", function() {
+      it("concatenates the members (key-value-pairs)", function() {
         this.processor.concat(this.otherCollection).map(this.processIt);
         expect(this.processIt).toHaveBeenCalledWith('one', 1);
         expect(this.processIt).toHaveBeenCalledWith('two', this.someFunction);
