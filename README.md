@@ -268,3 +268,4 @@ Your feedback is appreciated, please e-mail me at [alaarmann@gmx.net](mailto:ala
 
 * 0.1.0 Initial release
 * 0.2.0 Implementation of map(), filter(), reduce(), flatten(), concat(), difference(), intersection()
+* 0.3.0 Implementation of materialize()
