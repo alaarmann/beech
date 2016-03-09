@@ -13,7 +13,7 @@ A JavaScript object-tree processor, i.e. a 'collection pipeline' as described by
 
 Beech allows processing of a collection's items and applying different kinds of transformations to it.
 
-* Method chaining: every method returns the beech object, which allows chaining.
+* Method chaining: every method (except the 'terminating' methods, e.g. `materialize()`) returns the beech object, which allows chaining.
 * Constructor accepts a JavaScript value (scalar, array, hash) as argument. This value is taken as initial collection inside the beech object.
 * Beech's methods don't modify the initial collection but construct new collection instances at every transformation. Callbacks can modify items of the initial collection however.
 * Internally the current collection is seen as an array consisting of single values and/or special key-value pairs at root level (allowing duplicate key-value pairs). Higher levels stay the JavaScript values they are.
@@ -221,6 +221,35 @@ Below descriptions of beech's methods, cf. Fowler's [Operation Catalog](http://m
 
 ```
 
+### Method `materialize()`
+
+* The method doesn't take arguments. 
+* The method returns the current beech collection as a 'plain' JavaScript collection.
+* If the beech collection contains at least one key-value pair, beech produces a JavaScript Object populated by only key-value pairs.
+* If the beech collection contains exactly one value entry, beech produces this value as a JavaScript Scalar.
+* If the beech collection contains more than one value entry but no key-value pair, beech produces a JavaScript Array containing these entries.
+ 
+ 
+```javascript
+  var createBeechObjectTreeProcessor = require('beech');
+
+  var collection = {
+    'one' : 1,
+    'two' : 2,
+    'three' : 3
+  };
+
+  var otherCollection = {
+    'two' : 'dos',
+    'four' : 'cuatro'
+  };
+
+  var processor = createObjectTreeProcessor(collection);
+  var resultCollection = processor.concat(otherCollection).materialize();
+  // resultCollection is {'one' : 1, 'two' : 'dos', 'three' : 3, 'four' : 'cuatro'}
+
+```
+
 ## Tests
 
   `npm test`
@@ -239,3 +268,4 @@ Your feedback is appreciated, please e-mail me at [alaarmann@gmx.net](mailto:ala
 
 * 0.1.0 Initial release
 * 0.2.0 Implementation of map(), filter(), reduce(), flatten(), concat(), difference(), intersection()
+* 0.3.0 Implementation of materialize()

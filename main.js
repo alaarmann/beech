@@ -135,6 +135,7 @@ module.exports = function (aCollection){
   var concat;
   var difference;
   var intersection;
+  var materialize;
 
   // Initial state is a 'raw' JavaScript-collection
   processCollection = processRawCollection;
@@ -286,6 +287,31 @@ module.exports = function (aCollection){
     return processor;
   };
 
+  materialize = function () {
+    var materializedCollection = {'hash' : {}, 'array' : []};
+    var isHash;
+    var materializeCollection = function (aAccumulator, aKeyOrValue, aValue){
+      if (typeof aValue === 'undefined'){
+        aAccumulator.array.push(aKeyOrValue);
+      } else {
+        aAccumulator.hash[aKeyOrValue] = aValue;
+        isHash = true;
+      }
+      return aAccumulator;
+    };
+    reduce(materializedCollection, materializeCollection);
+    if (isHash){
+      return materializedCollection.hash;
+    }
+    if (materializedCollection.array.length === 1){
+      return materializedCollection.array[0];
+    }
+    if (materializedCollection.array.length === 0){
+      return undefined;
+    }
+    return materializedCollection.array;
+  };
+
   processor = {
     'map' : map,
     'filter' : filter,
@@ -293,7 +319,8 @@ module.exports = function (aCollection){
     'flatten' : flatten,
     'concat' : concat,
     'difference' : difference,
-    'intersection' : intersection
+    'intersection' : intersection,
+    'materialize' : materialize
   };
 
   return processor;

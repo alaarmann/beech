@@ -640,6 +640,94 @@ describe("ObjectTreeProcessor", function() {
       });
     });
   });
+
+  describe("materialize", function() {
+
+    beforeEach(function() {
+      this.someFunction = function () {};
+      this.someObject = {'key1' : 'value1', 'key2' : 'value2'};
+    });
+
+    describe("when at least one key-value pair exists", function() {
+      beforeEach(function() {
+        this.collection = {
+          'one' : 1
+        };
+        this.arrayCollection = [
+          'two',
+          'three',
+          'four'
+        ];
+        this.processor = createObjectTreeProcessor(this.collection);
+      });
+
+      it("produces an object containing the key-value-pairs, throwing away all entries without key", function() {
+        var resultCollection = this.processor.concat(this.arrayCollection).materialize();
+        expect(resultCollection).toEqual({'one' : 1});
+      });
+    });
+
+    describe("when the collection contains the same key more than once", function() {
+      beforeEach(function() {
+        this.collection = {
+          'one' : 1,
+          'two' : 2,
+          'three' : 3
+        };
+        this.otherCollection = {
+          'two' : 'dos',
+          'four' : 'cuatro'
+        };
+        this.processor = createObjectTreeProcessor(this.collection);
+      });
+
+      it("produces an object containing always the last occurence of every key", function() {
+        var resultCollection = this.processor.concat(this.otherCollection).materialize();
+        expect(resultCollection).toEqual({'one' : 1, 'two' : 'dos', 'three' : 3, 'four' : 'cuatro'});
+      });
+    });
+
+    describe("when the collection contains no key", function() {
+      beforeEach(function() {
+        this.arrayCollection = [
+          'two',
+          'three',
+          'four'
+        ];
+        this.anotherArrayCollection = [
+          'one',
+          'deux',
+          'tres'
+        ];
+        this.processor = createObjectTreeProcessor(this.arrayCollection);
+      });
+
+      it("produces an array containing every entry", function() {
+        var resultCollection = this.processor.concat(this.anotherArrayCollection).materialize();
+        expect(resultCollection).toEqual(['two', 'three', 'four', 'one', 'deux', 'tres']);
+      });
+    });
+
+    describe("when the collection contains a single entry and no key", function() {
+      beforeEach(function() {
+        this.arrayCollection = [
+          'two',
+          'three',
+          'four'
+        ];
+        this.processor = createObjectTreeProcessor(this.arrayCollection);
+        this.concatenateToString = function(aAccumulator, aValue){
+          return aAccumulator + aValue + ' ';
+        };
+
+      });
+
+      it("produces a scalar value", function() {
+        var resultCollection = this.processor.reduce('', this.concatenateToString).materialize();
+        expect(resultCollection).toEqual('two three four ');
+      });
+    });
+  });
 });
 
 
